@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="My Shop">
+<title>My Shop — Inventory & Sales</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#f5f5f0;--surface:#ffffff;--surface2:#f9f9f6;
+    --border:#e2e1d9;--border2:#ccccc4;
+    --text:#1a1a18;--text2:#52514e;--text3:#898781;
+    --accent:#1a6fd4;--accent-bg:#e8f0fb;
+    --success:#0a7c0a;--success-bg:#e8f6e8;
+    --warning:#9a6500;--warning-bg:#fef3d0;
+    --danger:#c0302f;--danger-bg:#fdeaea;
+    --radius:8px;
+  }
+  @media(prefers-color-scheme:dark){
+    :root{
+      --bg:#111110;--surface:#1c1c1a;--surface2:#242422;
+      --border:#2e2e2b;--border2:#3d3d3a;
+      --text:#f0efec;--text2:#c2c0b6;--text3:#898781;
+      --accent:#4a8fe0;--accent-bg:#1a2a3d;
+      --success:#3daa3d;--success-bg:#0d2b0d;
+      --warning:#d4a00a;--warning-bg:#2b2200;
+      --danger:#e05555;--danger-bg:#2d0f0f;
+    }
+  }
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:15px;min-height:100vh}
+  header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+  header h1{font-size:18px;font-weight:600;letter-spacing:-0.3px}
+  header span{font-size:13px;color:var(--text3)}
+  nav{display:flex;background:var(--surface);border-top:1px solid var(--border);position:fixed;bottom:0;left:0;right:0;z-index:100}
+  nav button{flex:1;padding:10px 4px 12px;border:none;background:none;color:var(--text3);font-size:11px;font-weight:500;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;transition:color .15s}
+  nav button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+  nav button.active{color:var(--accent)}
+  .page{display:none;padding:16px 16px 90px;max-width:700px;margin:0 auto}
+  .page.active{display:block}
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+  .metric{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px}
+  .metric-label{font-size:12px;color:var(--text3);margin-bottom:4px}
+  .metric-value{font-size:22px;font-weight:600}
+  .metric-sub{font-size:12px;color:var(--text2);margin-top:2px}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px}
+  .card-title{font-size:15px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:var(--text)}
+  .form-group{margin-bottom:12px}
+  .form-group label{display:block;font-size:13px;color:var(--text2);margin-bottom:5px;font-weight:500}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  input,select,textarea{width:100%;padding:10px 12px;border:1px solid var(--border2);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:15px;appearance:none;-webkit-appearance:none}
+  input:focus,select:focus{outline:none;border-color:var(--accent)}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:11px 18px;border-radius:var(--radius);font-size:15px;font-weight:500;cursor:pointer;border:none;transition:opacity .15s}
+  .btn:active{opacity:.75;transform:scale(.98)}
+  .btn-primary{background:var(--accent);color:#fff;width:100%;margin-top:4px}
+  .btn-outline{background:none;border:1px solid var(--border2);color:var(--text2)}
+  .btn-danger{background:var(--danger-bg);color:var(--danger);border:1px solid var(--danger)}
+  .btn-sm{padding:6px 12px;font-size:13px}
+  .error{font-size:13px;color:var(--danger);margin-top:6px;padding:8px 10px;background:var(--danger-bg);border-radius:var(--radius);display:none}
+  .error.show{display:block}
+  .success-msg{font-size:14px;color:var(--success);margin-top:8px;padding:10px 12px;background:var(--success-bg);border-radius:var(--radius);display:none}
+  .success-msg.show{display:block}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;padding:8px 10px;font-size:12px;font-weight:600;color:var(--text3);border-bottom:1px solid var(--border);white-space:nowrap}
+  td{padding:10px 10px;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text)}
+  tr:last-child td{border-bottom:none}
+  .badge{display:inline-block;padding:3px 9px;border-radius:100px;font-size:12px;font-weight:500}
+  .badge-success{background:var(--success-bg);color:var(--success)}
+  .badge-warning{background:var(--warning-bg);color:var(--warning)}
+  .badge-danger{background:var(--danger-bg);color:var(--danger)}
+  .empty{text-align:center;padding:32px 16px;color:var(--text3);font-size:14px}
+  .empty svg{width:40px;height:40px;stroke:var(--text3);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;margin:0 auto 10px;display:block}
+  .stock-bar-bg{display:inline-block;background:var(--border);border-radius:100px;height:6px;width:70px;vertical-align:middle}
+  .stock-bar{height:100%;border-radius:100px}
+  .sale-total{font-size:17px;font-weight:600;padding:12px 0 4px;color:var(--text)}
+  .filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+  .filter-row input{flex:1;min-width:120px}
+  .date-chip{font-size:12px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:2px 8px;color:var(--text3)}
+  .section-title{font-size:13px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 10px}
+  .alert-banner{background:var(--warning-bg);border:1px solid var(--warning);border-radius:10px;padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--warning)}
+  .tab-row{display:flex;gap:4px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0}
+  .tab-btn{padding:8px 14px;font-size:14px;font-weight:500;background:none;border:none;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-1px}
+  .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+  .profit{color:var(--success);font-weight:600}
+  .loss{color:var(--danger);font-weight:600}
+  .icon{display:inline-block;vertical-align:middle}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>🛒 My Shop</h1>
+  <span id="today-date"></span>
+</header>
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <div id="alert-box"></div>
+  <div class="metrics" id="metrics-grid"></div>
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+      Current stock
+    </div>
+    <div id="stock-table"></div>
+  </div>
+</div>
+
+<!-- ADD GOODS -->
+<div class="page" id="page-goods">
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><path d="M12 5v14M5 12h14"/></svg>
+      Add goods
+    </div>
+    <div class="form-group">
+      <label>Product name</label>
+      <input id="g-name" type="text" placeholder="e.g. Bag of rice 5kg">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Category</label>
+        <select id="g-cat">
+          <option>Food & drink</option>
+          <option>Electronics</option>
+          <option>Clothing</option>
+          <option>Household</option>
+          <option>Cosmetics</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Low stock alert</label>
+        <input id="g-low" type="number" min="1" placeholder="5">
+      </div>
+    </div>
+    <div class="form-row-3">
+      <div class="form-group">
+        <label>Quantity</label>
+        <input id="g-qty" type="number" min="1" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Cost price (₦)</label>
+        <input id="g-cost" type="number" min="0" placeholder="0">
+      </div>
+      <div class="form-group">
+        <label>Sell price (₦)</label>
+        <input id="g-sell" type="number" min="0" placeholder="0">
+      </div>
+    </div>
+    <div class="error" id="goods-err"></div>
+    <button class="btn btn-primary" onclick="addGoods()">Add to inventory</button>
+    <div class="success-msg" id="goods-ok"></div>
+  </div>
+
+  <div class="section-title">All products</div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div id="products-list"></div>
+  </div>
+</div>
+
+<!-- RECORD SALE -->
+<div class="page" id="page-sales">
+  <div class="card">
+    <div class="card-title">
+      <svg viewBox="0 0 24 24" style="width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+      Record a sale
+    </div>
+    <div class="form-group">
+      <label>Product</label>
+      <select id="s-product" onchange="onSaleProductChange()">
+        <option value="">— select a product —</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Quantity sold</label>
+        <input id="s-qty" type="number" min="1" placeholder="1" oninput="updateSaleTotal()">
+      </div>
+      <div class="form-group">
+        <label>Unit price (₦)</label>
+        <input id="s-price" type="number" min="0" placeholder="0" oninput="updateSaleTotal()">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Customer name (optional)</label>
+        <input id="s-customer" type="text" placeholder="Customer name">
+      </div>
+      <div class="form-group">
+        <label>Payment method</label>
+        <select id="s-payment">
+          <option>Cash</option>
+          <option>Transfer</option>
+          <option>POS</option>
+          <option>Credit</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Note (optional)</label>
+      <input id="s-note" type="text" placeholder="Any note">
+    </div>
+    <div class="sale-total" id="sale-total"></div>
+    <div class="error" id="sales-err"></div>
+    <button class="btn btn-primary" onclick="recordSale()">Record sale</button>
+    <div class="success-msg" id="sales-ok"></div>
+  </div>
+</div>
+
+<!-- HISTORY -->
+<div class="page" id="page-history">
+  <div class="tab-row">
+    <button class="tab-btn active" onclick="switchHistTab('sales',this)">Sales</button>
+    <button class="tab-btn" onclick="switchHistTab('goods',this)">Goods added</button>
+    <button class="tab-btn" onclick="switchHistTab('report',this)">Report</button>
+  </div>
+
+  <div id="hist-sales">
+    <div class="filter-row">
+      <input type="date" id="h-from" onchange="renderSalesHistory()">
+      <input type="date" id="h-to" onchange="renderSalesHistory()">
+      <button class="btn btn-outline btn-sm" onclick="clearDates()">All</button>
+    </div>
+    <div id="sales-history-out"></div>
+  </div>
+
+  <div id="hist-goods" style="display:none">
+    <div id="goods-history-out"></div>
+  </div>
+
+  <div id="hist-report" style="display:none">
+    <div id="report-out"></div>
+  </div>
+</div>
+
+<nav>
+  <button class="active" onclick="showPage('dashboard',this)">
+    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Dashboard
+  </button>
+  <button onclick="showPage('goods',this)">
+    <svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+    Goods
+  </button>
+  <button onclick="showPage('sales',this)">
+    <svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+    Record Sale
+  </button>
+  <button onclick="showPage('history',this)">
+    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+    History
+  </button>
+</nav>
+
+<script>
+// ── Storage ──
+function load(k,d){try{return JSON.parse(localStorage.getItem(k))||d}catch(e){return d}}
+function save(k,v){localStorage.setItem(k,JSON.stringify(v))}
+let products = load('inv_products',[]);
+let sales    = load('inv_sales',[]);
+let goodsLog = load('inv_goodslog',[]);
+function persist(){save('inv_products',products);save('inv_sales',sales);save('inv_goodslog',goodsLog)}
+
+// ── Utils ──
+function fmt(n){return Number(n||0).toLocaleString('en-NG')}
+function today(){return new Date().toISOString().slice(0,10)}
+function fmtDate(iso){return new Date(iso).toLocaleDateString('en-NG',{day:'numeric',month:'short',year:'numeric'})}
+document.getElementById('today-date').textContent = fmtDate(today());
+
+// ── Navigation ──
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='dashboard'){renderDashboard()}
+  if(id==='goods'){renderProductsList()}
+  if(id==='sales'){populateSaleSelect()}
+  if(id==='history'){renderSalesHistory();renderGoodsHistory();renderReport()}
+}
+
+// ── Dashboard ──
+function renderDashboard(){
+  const totalUnits = products.reduce((a,p)=>a+p.qty,0);
+  const stockVal   = products.reduce((a,p)=>a+(p.qty*p.cost),0);
+  const todaySales = sales.filter(s=>s.date===today());
+  const todayRev   = todaySales.reduce((a,s)=>a+s.total,0);
+  const todayProfit= todaySales.reduce((a,s)=>a+(s.total-(s.qty*(products.find(p=>p.id===s.pid)||{cost:0}).cost)),0);
+  const lowStock   = products.filter(p=>p.qty>0&&p.qty<=p.low);
+  const outStock   = products.filter(p=>p.qty===0);
+
+  document.getElementById('metrics-grid').innerHTML=`
+    <div class="metric"><div class="metric-label">Today's revenue</div><div class="metric-value" style="color:var(--accent)">₦${fmt(todayRev)}</div><div class="metric-sub">${todaySales.length} sale(s)</div></div>
+    <div class="metric"><div class="metric-label">Today's profit</div><div class="metric-value" style="color:var(--success)">₦${fmt(todayProfit)}</div><div class="metric-sub">Est. margin</div></div>
+    <div class="metric"><div class="metric-label">Total stock units</div><div class="metric-value">${fmt(totalUnits)}</div><div class="metric-sub">${products.length} products</div></div>
+    <div class="metric"><div class="metric-label">Stock value (cost)</div><div class="metric-value">₦${fmt(stockVal)}</div><div class="metric-sub">&nbsp;</div></div>
+  `;
+
+  let alerts='';
+  if(outStock.length) alerts+=`<div class="alert-banner">⚠️ <strong>${outStock.length}</strong> product(s) out of stock</div>`;
+  if(lowStock.length) alerts+=`<div class="alert-banner" style="background:var(--warning-bg);border-color:var(--warning);color:var(--warning)">📉 <strong>${lowStock.length}</strong> product(s) running low</div>`;
+  document.getElementById('alert-box').innerHTML=alerts;
+
+  if(!products.length){
+    document.getElementById('stock-table').innerHTML='<div class="empty"><svg viewBox="0 0 24 24"><path d="M20 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/></svg>No products yet. Add goods to start.</div>';
+    return;
+  }
+  const sorted=[...products].sort((a,b)=>a.qty-b.qty);
+  document.getElementById('stock-table').innerHTML=`
+    <div style="overflow-x:auto">
+    <table>
+      <thead><tr><th>Product</th><th>Qty</th><th>Sell ₦</th><th>Status</th></tr></thead>
+      <tbody>${sorted.map(p=>{
+        const max=Math.max(p.low*3,10,p.qty);
+        const pct=Math.round((p.qty/max)*100);
+        const col=p.qty===0?'var(--danger)':p.qty<=p.low?'var(--warning)':'var(--success)';
+        const badge=p.qty===0?'badge-danger':p.qty<=p.low?'badge-warning':'badge-success';
+        const label=p.qty===0?'Out of stock':p.qty<=p.low?'Low stock':'In stock';
+        return`<tr>
+          <td style="font-weight:500;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</td>
+          <td>${fmt(p.qty)}</td>
+          <td>${fmt(p.sell)}</td>
+          <td><span class="badge ${badge}">${label}</span></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table></div>`;
+}
+
+// ── Add Goods ──
+function addGoods(){
+  const name=document.getElementById('g-name').value.trim();
+  const qty=parseInt(document.getElementById('g-qty').value)||0;
+  const cost=parseFloat(document.getElementById('g-cost').value)||0;
+  const sell=parseFloat(document.getElementById('g-sell').value)||0;
+  const low=parseInt(document.getElementById('g-low').value)||5;
+  const cat=document.getElementById('g-cat').value;
+  const err=document.getElementById('goods-err');
+  const ok=document.getElementById('goods-ok');
+  err.classList.remove('show'); ok.classList.remove('show');
+  if(!name){err.textContent='Enter a product name.';err.classList.add('show');return}
+  if(qty<1){err.textContent='Quantity must be at least 1.';err.classList.add('show');return}
+  if(sell<1){err.textContent='Enter a selling price.';err.classList.add('show');return}
+
+  const existing=products.find(p=>p.name.toLowerCase()===name.toLowerCase());
+  if(existing){
+    existing.qty+=qty; existing.cost=cost; existing.sell=sell; existing.low=low;
+    goodsLog.push({date:today(),pid:existing.id,name,qty,cost,sell,action:'Restocked'});
+    ok.textContent=`✓ ${name} restocked. New qty: ${existing.qty}`;
+  } else {
+    const id=Date.now();
+    products.push({id,name,cat,qty,cost,sell,low});
+    goodsLog.push({date:today(),pid:id,name,qty,cost,sell,action:'New product'});
+    ok.textContent=`✓ ${name} added to inventory.`;
+  }
+  persist();
+  document.getElementById('g-name').value='';
+  document.getElementById('g-qty').value='';
+  document.getElementById('g-cost').value='';
+  document.getElementById('g-sell').value='';
+  ok.classList.add('show');
+  renderProductsList();
+}
+
+function renderProductsList(){
+  const w=document.getElementById('products-list');
+  if(!products.length){w.innerHTML='<div class="empty">No products yet.</div>';return}
+  w.innerHTML=`<div style="overflow-x:auto"><table>
+    <thead><tr><th>Name</th><th>Cat</th><th>Qty</th><th>Cost ₦</th><th>Sell ₦</th><th>Alert</th><th></th></tr></thead>
+    <tbody>${products.map(p=>`<tr>
+      <td style="font-weight:500;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.name}</td>
+      <td style="color:var(--text3)">${p.cat}</td>
+      <td>${fmt(p.qty)}</td><td>${fmt(p.cost)}</td><td>${fmt(p.sell)}</td><td>${p.low}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="delProduct(${p.id})">✕</button></td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function delProduct(id){
+  if(!confirm('Delete this product?'))return;
+  products=products.filter(p=>p.id!==id);
+  persist(); renderProductsList(); renderDashboard();
+}
+
+// ── Sales ──
+function populateSaleSelect(){
+  const sel=document.getElementById('s-product');
+  const prev=sel.value;
+  sel.innerHTML='<option value="">— select a product —</option>'+
+    products.filter(p=>p.qty>0).map(p=>`<option value="${p.id}">${p.name} (${p.qty} left)</option>`).join('');
+  if(prev) sel.value=prev;
+  updateSaleTotal();
+}
+
+function onSaleProductChange(){
+  const sel=document.getElementById('s-product');
+  const p=products.find(x=>x.id==sel.value);
+  if(p) document.getElementById('s-price').value=p.sell;
+  updateSaleTotal();
+}
+
+function updateSaleTotal(){
+  const qty=parseFloat(document.getElementById('s-qty').value)||0;
+  const price=parseFloat(document.getElementById('s-price').value)||0;
+  const total=qty*price;
+  document.getElementById('sale-total').textContent=total>0?`Total: ₦${fmt(total)}`:'';
+}
+
+function recordSale(){
+  const sel=document.getElementById('s-product');
+  const p=products.find(x=>x.id==sel.value);
+  const qty=parseInt(document.getElementById('s-qty').value)||0;
+  const price=parseFloat(document.getElementById('s-price').value)||0;
+  const customer=document.getElementById('s-customer').value.trim();
+  const payment=document.getElementById('s-payment').value;
+  const note=document.getElementById('s-note').value.trim();
+  const err=document.getElementById('sales-err');
+  const ok=document.getElementById('sales-ok');
+  err.classList.remove('show'); ok.classList.remove('show');
+  if(!p){err.textContent='Select a product.';err.classList.add('show');return}
+  if(qty<1){err.textContent='Enter quantity sold.';err.classList.add('show');return}
+  if(qty>p.qty){err.textContent=`Only ${p.qty} unit(s) in stock.`;err.classList.add('show');return}
+  if(price<1){err.textContent='Enter a selling price.';err.classList.add('show');return}
+
+  const total=qty*price;
+  const profit=total-(qty*p.cost);
+  p.qty-=qty;
+  sales.push({id:Date.now(),date:today(),pid:p.id,product:p.name,qty,price,total,profit,customer,payment,note});
+  persist();
+  document.getElementById('s-qty').value='';
+  document.getElementById('s-customer').value='';
+  document.getElementById('s-note').value='';
+  document.getElementById('s-price').value='';
+  document.getElementById('sale-total').textContent='';
+  sel.value='';
+  ok.textContent=`✓ Sale recorded — ₦${fmt(total)} | Profit: ₦${fmt(profit)}`;
+  ok.classList.add('show');
+  populateSaleSelect();
+}
+
+// ── History ──
+function switchHistTab(tab,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('hist-sales').style.display=tab==='sales'?'block':'none';
+  document.getElementById('hist-goods').style.display=tab==='goods'?'block':'none';
+  document.getElementById('hist-report').style.display=tab==='report'?'block':'none';
+}
+
+function clearDates(){
+  document.getElementById('h-from').value='';
+  document.getElementById('h-to').value='';
+  renderSalesHistory();
+}
+
+function renderSalesHistory(){
+  const from=document.getElementById('h-from').value;
+  const to=document.getElementById('h-to').value;
+  let list=[...sales].reverse();
+  if(from) list=list.filter(s=>s.date>=from);
+  if(to) list=list.filter(s=>s.date<=to);
+  const totalRev=list.reduce((a,s)=>a+s.total,0);
+  const totalProfit=list.reduce((a,s)=>a+(s.profit||0),0);
+  const w=document.getElementById('sales-history-out');
+  if(!list.length){w.innerHTML='<div class="empty">No sales found.</div>';return}
+  w.innerHTML=`
+    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+      <div class="metric" style="flex:1;min-width:120px"><div class="metric-label">Revenue</div><div class="metric-value" style="font-size:18px;color:var(--accent)">₦${fmt(totalRev)}</div></div>
+      <div class="metric" style="flex:1;min-width:120px"><div class="metric-label">Profit</div><div class="metric-value" style="font-size:18px;color:var(--success)">₦${fmt(totalProfit)}</div></div>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table>
+      <thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Total ₦</th><th>Payment</th><th>Customer</th></tr></thead>
+      <tbody>${list.map(s=>`<tr>
+        <td><span class="date-chip">${fmtDate(s.date)}</span></td>
+        <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">${s.product}</td>
+        <td>${s.qty}</td>
+        <td style="font-weight:600">₦${fmt(s.total)}</td>
+        <td style="color:var(--text3)">${s.payment||'Cash'}</td>
+        <td style="color:var(--text3)">${s.customer||'—'}</td>
+      </tr>`).join('')}</tbody>
+    </table></div></div>`;
+}
+
+function renderGoodsHistory(){
+  const list=[...goodsLog].reverse();
+  const w=document.getElementById('goods-history-out');
+  if(!list.length){w.innerHTML='<div class="empty">No goods added yet.</div>';return}
+  w.innerHTML=`<div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table>
+    <thead><tr><th>Date</th><th>Product</th><th>Qty</th><th>Cost ₦</th><th>Sell ₦</th><th>Action</th></tr></thead>
+    <tbody>${list.map(g=>`<tr>
+      <td><span class="date-chip">${fmtDate(g.date)}</span></td>
+      <td style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">${g.name}</td>
+      <td>${g.qty}</td><td>₦${fmt(g.cost)}</td><td>₦${fmt(g.sell)}</td>
+      <td><span class="badge ${g.action==='New product'?'badge-success':'badge-warning'}">${g.action}</span></td>
+    </tr>`).join('')}</tbody>
+  </table></div></div>`;
+}
+
+function renderReport(){
+  const w=document.getElementById('report-out');
+  if(!sales.length){w.innerHTML='<div class="empty">No sales data yet.</div>';return}
+  // Group by product
+  const byProduct={};
+  sales.forEach(s=>{
+    if(!byProduct[s.product]) byProduct[s.product]={name:s.product,units:0,revenue:0,profit:0};
+    byProduct[s.product].units+=s.qty;
+    byProduct[s.product].revenue+=s.total;
+    byProduct[s.product].profit+=(s.profit||0);
+  });
+  const rows=Object.values(byProduct).sort((a,b)=>b.revenue-a.revenue);
+  // Group by day
+  const byDay={};
+  sales.forEach(s=>{
+    if(!byDay[s.date]) byDay[s.date]={rev:0,profit:0,count:0};
+    byDay[s.date].rev+=s.total; byDay[s.date].profit+=(s.profit||0); byDay[s.date].count++;
+  });
+  const days=Object.entries(byDay).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,7);
+  w.innerHTML=`
+    <div class="section-title">Top products (all time)</div>
+    <div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table>
+      <thead><tr><th>Product</th><th>Units sold</th><th>Revenue ₦</th><th>Profit ₦</th></tr></thead>
+      <tbody>${rows.map(r=>`<tr>
+        <td style="font-weight:500;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.name}</td>
+        <td>${r.units}</td>
+        <td>₦${fmt(r.revenue)}</td>
+        <td class="${r.profit>=0?'profit':'loss'}">₦${fmt(r.profit)}</td>
+      </tr>`).join('')}</tbody>
+    </table></div></div>
+    <div class="section-title">Daily summary (last 7 days)</div>
+    <div class="card" style="padding:0;overflow:hidden"><div style="overflow-x:auto"><table>
+      <thead><tr><th>Date</th><th>Sales</th><th>Revenue ₦</th><th>Profit ₦</th></tr></thead>
+      <tbody>${days.map(([date,d])=>`<tr>
+        <td><span class="date-chip">${fmtDate(date)}</span></td>
+        <td>${d.count}</td>
+        <td style="font-weight:600">₦${fmt(d.rev)}</td>
+        <td class="${d.profit>=0?'profit':'loss'}">₦${fmt(d.profit)}</td>
+      </tr>`).join('')}</tbody>
+    </table></div></div>`;
+}
+
+// Init
+renderDashboard();
+</script>
+</body>
+</html>
